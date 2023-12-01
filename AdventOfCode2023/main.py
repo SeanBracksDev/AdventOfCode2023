@@ -15,9 +15,8 @@ def main():
             f"{entry.name}/input.txt"
         ).open() as file:
             data = [line.replace("\n", "") for line in file.readlines()]
-        print(entry.load()[1](data))
-        # for part in entry.load():
-        #     print(part(data))
+        for part in entry.load():
+            print(part(data))
         print()
 
 
