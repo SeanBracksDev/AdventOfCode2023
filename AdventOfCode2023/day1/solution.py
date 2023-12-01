@@ -22,14 +22,14 @@ def convert_spelt_numbers(line: str) -> str:
     return line
 
 
-def part1(_input: list[str]):
+def part1(_input: list[str]) -> int:
     total = 0
     for line in _input:
         total += get_line_value(line)
     return total
 
 
-def part2(_input: list[str]):
+def part2(_input: list[str]) -> int:
     total = 0
     for line in _input:
         line = convert_spelt_numbers(line)
