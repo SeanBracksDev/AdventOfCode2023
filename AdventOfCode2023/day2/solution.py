@@ -18,10 +18,9 @@ def _parse_game_data(data: str) -> list[dict]:
 
 def part1(_input: list[str]) -> int:
     total = 0
-    for line in _input:
-        game, data = line.split(":")
+    for game_id, line in enumerate(_input):
+        data = line.split(":")[1]
 
-        game_id = int(game.split()[1])
         parsed_colour_data = _parse_game_data(data)
 
         valid = True
@@ -32,7 +31,7 @@ def part1(_input: list[str]) -> int:
                     break
 
         if valid:
-            total += game_id
+            total += int(game_id + 1)
     return total
 
 
