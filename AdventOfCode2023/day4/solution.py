@@ -25,7 +25,10 @@ def part1(_input: list[str]) -> int:
 
 
 def _get_won_games(
-    card_id: int, game_data: dict[int, list[list[str]]], total_cards: int, cache=None
+    card_id: int,
+    game_data: dict[int, list[list[str]]],
+    total_cards: int,
+    cache: dict[tuple[int, int], int] | None = None,
 ) -> int:
     if cache is None:
         cache = {}
