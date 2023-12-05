@@ -1,5 +1,3 @@
-from pprint import pprint
-
 MAPPING_NAMES = (
     "seed-to-soil",
     "soil-to-fertilizer",
