@@ -55,8 +55,6 @@ def _get_surrounding_numbers(row: int, col: int, grid: list[list[str]]) -> list[
                 checked_coords += coords
                 found_numbers.append(whole_number)
 
-    print("Symbol:", grid[row][col])
-    print("Surrounding numbers:", found_numbers)
     return found_numbers
 
 
@@ -74,14 +72,25 @@ def part1(_input: list[str]) -> int:
                 )
                 if surrounding_values:
                     for value in surrounding_values:
-                        print("adding", value)
                         total += value
-                    print("=====================")
     return total
 
 
 def part2(_input: list[str]) -> int:
-    ...
+    total = 0
+    data = _parse(_input)
+
+    for line_index, line in enumerate(data):
+        for char_index, character in enumerate(line):
+            if character in SYMBOLS:
+                surrounding_values = _get_surrounding_numbers(
+                    row=line_index,
+                    col=char_index,
+                    grid=data,
+                )
+                if len(surrounding_values) == 2:
+                    total += surrounding_values[0] * surrounding_values[1]
+    return total
 
 
 parts = (part1, part2)
