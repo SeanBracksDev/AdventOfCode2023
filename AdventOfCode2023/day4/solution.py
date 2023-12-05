@@ -1,6 +1,3 @@
-from functools import lru_cache
-
-
 def _parse(data: list[str]) -> dict[int, list[list[str]]]:
     parsed_data: dict[int, list[list[str]]] = {}
     for line in data:
