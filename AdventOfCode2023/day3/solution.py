@@ -7,9 +7,29 @@ def _parse(data: list[str]) -> list[list[str]]:
     return [list(line) for line in data]
 
 
-def _find_neighbour_symbols(
-    row: int, col: int, grid: list[list[str]], value_index: int
-):
+def _get_whole_number(
+    row: int, col: int, grid: list[list[str]]
+) -> tuple[list[tuple[int, int]], int]:
+    curr_numbers = [int(grid[row][col])]
+    coord_used: list[tuple[int, int]] = []
+    left_col, right_col = col, col
+    while (left_col := left_col - 1) >= 0:
+        if grid[row][left_col].isdigit():
+            curr_numbers.insert(0, int(grid[row][left_col]))
+            coord_used.append((row, left_col))
+        else:
+            break
+
+    while (right_col := right_col + 1) < len(grid[row]):
+        if grid[row][right_col].isdigit():
+            curr_numbers.append(int(grid[row][right_col]))
+            coord_used.append((row, right_col))
+        else:
+            break
+    return coord_used, int("".join([str(i) for i in curr_numbers]))
+
+
+def _get_surrounding_numbers(row: int, col: int, grid: list[list[str]]) -> list[int]:
     neighbour_deltas = (
         (row - 1, col - 1),  # top left
         (row, col - 1),  # left
@@ -21,59 +41,42 @@ def _find_neighbour_symbols(
         (row + 1, col + 1),  # bottom right
     )
 
-    return [
-        grid[r][c + value_index]
-        for r, c in neighbour_deltas
-        if 0 <= c + value_index < len(grid[0]) and 0 <= r < len(grid)
-        if grid[r][c + value_index] in SYMBOLS
-    ]
+    found_numbers: list[int] = []
+    checked_coords: list[tuple[int, int]] = []
+    for r, c in neighbour_deltas:
+        if (
+            0 <= c <= len(grid[0])
+            and 0 <= r <= len(grid)
+            and (r, c) not in checked_coords
+        ):
+            checked_coords.append((r, c))
+            if grid[r][c].isdigit():
+                coords, whole_number = _get_whole_number(r, c, grid)
+                checked_coords += coords
+                found_numbers.append(whole_number)
 
-
-def _check_for_symbol(
-    line_index: int,
-    character_index: int,
-    current_value: list[str],
-    data: list[list[str]],
-) -> bool:
-    for value_index in range(len(current_value)):
-        symbol_neighbours = _find_neighbour_symbols(
-            line_index, character_index, data, value_index
-        )
-        if symbol_neighbours:
-            return True
-    return False
+    print("Symbol:", grid[row][col])
+    print("Surrounding numbers:", found_numbers)
+    return found_numbers
 
 
 def part1(_input: list[str]) -> int:
     total = 0
     data = _parse(_input)
 
-    # for line in data:
-    #     print(line)
-
-    current_value: list[str] = []
-    current_start_index = -1
-
-    for line in data:
-        print(line)
     for line_index, line in enumerate(data):
         for char_index, character in enumerate(line):
-            if character.isdigit():
-                if not current_value:
-                    current_start_index = char_index
-                current_value.append(character)
-
-            if char_index == len(line) - 1 or not character.isdigit():
-                if current_value:
-                    if _check_for_symbol(
-                        line_index=line_index,
-                        character_index=current_start_index,
-                        current_value=current_value,
-                        data=data,
-                    ):
-                        total += int("".join(current_value))
-                    current_value = []
-
+            if character in SYMBOLS:
+                surrounding_values = _get_surrounding_numbers(
+                    row=line_index,
+                    col=char_index,
+                    grid=data,
+                )
+                if surrounding_values:
+                    for value in surrounding_values:
+                        print("adding", value)
+                        total += value
+                    print("=====================")
     return total
 
 
