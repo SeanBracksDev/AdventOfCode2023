@@ -1,3 +1,5 @@
+from itertools import batched
+
 MAPPING_NAMES = (
     "seed-to-soil",
     "soil-to-fertilizer",
@@ -47,27 +49,35 @@ def _parse_ranges(
     return parsed_ranges
 
 
+def get_location(
+    seed: int, conversion_mappings: dict[str, list[int | list[tuple[int]]]]
+) -> int:
+    seed_conversion = seed
+    for mapping_name in conversion_mappings:
+        for range_map in conversion_mappings[mapping_name]:
+            if range_map[1][0] <= seed_conversion <= range_map[1][1]:
+                seed_conversion = range_map[0][0] + (seed_conversion - range_map[1][0])
+                break
+    return seed_conversion
+
+
 def part1(_input: list[str]) -> int:
-    seeds, parsed_data = _parse(_input)
+    seeds, parsed_data = _parse(data=_input)
     parsed_range_data = _parse_ranges(parsed_data)
 
-    seed_locations = []
-
-    for seed in seeds:
-        seed_conversion = seed
-        for mapping_name in MAPPING_NAMES:
-            for range_map in parsed_range_data[mapping_name]:
-                if range_map[1][0] <= seed_conversion <= range_map[1][1]:
-                    seed_conversion = range_map[0][0] + (
-                        seed_conversion - range_map[1][0]
-                    )
-                    break
-        seed_locations.append(seed_conversion)
-    return min(seed_locations)
+    return min(list((get_location(s, parsed_range_data) for s in seeds)))
 
 
 def part2(_input: list[str]) -> int:
-    ...
+    seeds, parsed_data = _parse(data=_input)
+    parsed_range_data = _parse_ranges(parsed_data)
+    seed_locations = []
+    for seed_batch in batched(seeds, 2):
+        seed_range = (seed_batch[0], seed_batch[0] + seed_batch[1] - 1)
+        for seed in range(seed_range[0], seed_range[1] + 1):
+            seed_locations.append(get_location(seed, parsed_range_data))
+
+    return min(seed_locations)
 
 
 parts = (part1, part2)
