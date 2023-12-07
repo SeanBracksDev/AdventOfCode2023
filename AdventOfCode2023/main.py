@@ -11,12 +11,14 @@ def main():
         if names and entry.name.removeprefix("day") not in names:
             continue
         print(f"Day {entry.name.removeprefix('day')}")
+        print("=" * 12)
         with resources.files("AdventOfCode2023").joinpath(
             f"{entry.name}/input.txt"
         ).open() as file:
             data = [line.replace("\n", "") for line in file.readlines()]
         for part in entry.load():
             print(part(data))
+            print("-" * 10)
         print()
 
 
