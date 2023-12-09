@@ -69,6 +69,8 @@ def part1(_input: list[str]) -> int:
 
 
 def part2(_input: list[str]) -> int:
+    # TODO
+    return
     seeds, parsed_data = _parse(data=_input)
     parsed_range_data = _parse_ranges(parsed_data)
     seed_locations = []
