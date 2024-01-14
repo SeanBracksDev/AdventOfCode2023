@@ -55,7 +55,7 @@ The rest of the almanac contains a list of maps which describe how to convert nu
 Rather than list every source number and its corresponding destination number one by one, the maps describe entire ranges of numbers that can be converted. Each line within a map contains three numbers: the destination range start, the source range start, and the range length.
 
 Consider again the example seed-to-soil map:
-
+ 
 50 98 2
 52 50 48
 
