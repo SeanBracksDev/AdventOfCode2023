@@ -20,6 +20,9 @@ class Range:
     min: int
     max: int
 
+    def __str__(self) -> str:
+        return f"'{', '.join([str(i) for i in range(self.min, self.max + 1)])}'"
+
 
 def _parse(data: list[str]) -> tuple[list[int], dict[str, list[list[int]]]]:
     parsed_conversion_data: dict[str, list[list[int]]] = {k: [] for k in MAPPING_NAMES}
@@ -62,7 +65,7 @@ def get_location(seed: int, conversion_mappings: dict[str, list[list[Range]]]) -
     return seed_conversion
 
 
-def get_range_overlap(range_1: Range, range_2: Range) -> tuple[int, int] | tuple[None, None]:
+def get_range_overlap(range_1: Range, range_2: Range) -> Range | None:
     """Returns the min and max values overlap between two ranges
 
     :param Range range_1: range 1
@@ -70,50 +73,63 @@ def get_range_overlap(range_1: Range, range_2: Range) -> tuple[int, int] | tuple
     :return tuple[int, int] | None: intersecting min & max of ranges or None if no overlap
     """
     if range_1.max < range_2.min or range_2.max < range_1.min:
-        return None, None
+        return None
 
-    return max(range_1.min, range_2.min), min(range_1.max, range_2.max)
+    return Range(max(range_1.min, range_2.min), min(range_1.max, range_2.max))
 
 
-def convert_seeds(seed_range: Range, conversion_mappings: dict[str, list[list[Range]]]):
-    curr_values = list(range(seed_range.min, seed_range.max + 1))
-    converted_values = []
+def convert_seeds(seed_range: Range, conversion_mappings: dict[str, list[list[Range]]]) -> list[Range]:
+    non_converted_values: list[Range] = [seed_range]
+    converted_values: list[Range] = []
     # print(curr_values)
     for mapping_name in conversion_mappings:
         # print(mapping_name)
         for dest_range, source_range in conversion_mappings[mapping_name]:
-            overlap = get_range_overlap(
-                range_1=Range(min=min(curr_values), max=max(curr_values)),
-                range_2=source_range,
-            )
-            if overlap[0] is None:
-                continue
-
-            overlap_values = list(range(overlap[0], overlap[1] + 1))
-            dest_range_values = list(range(dest_range.min, dest_range.max + 1))
-            source_range_values = list(range(source_range.min, source_range.max + 1))
-            # print(f"{overlap=}")
-            # print(f"{source_range_values=}")
-            # print(f"{dest_range_values=}")
-            # print(f"{seed_range=}")
-            for v in curr_values.copy():
-                if v in overlap_values:
-                    bisect.insort(converted_values, dest_range_values[source_range_values.index(v)])
-                    curr_values.remove(v)
-
-            if not curr_values:
+            if not non_converted_values:
                 break
 
+            for r in non_converted_values.copy():
+                overlap = get_range_overlap(
+                    range_1=r,
+                    range_2=source_range,
+                )
+                if overlap is None:
+                    continue
+
+                lower_leftover = Range(source_range.min, overlap.min - 1) if source_range.min < overlap.min else None
+                upper_leftover = Range(overlap.max + 1, source_range.max) if source_range.max > overlap.max else None
+
+                if lower_leftover:
+                    non_converted_values.append(lower_leftover)
+
+                if upper_leftover:
+                    non_converted_values.append(upper_leftover)
+
+                # converted_values.append(dest_range.min + (v - source_range.min))
+                converted_values.append(
+                    Range(
+                        dest_range.min + (overlap.min - source_range.min),
+                        dest_range.min + (overlap.max - source_range.min),
+                    )
+                )
+
+                non_converted_values.remove(r)
+
+                # print(non_converted_values)
+                # print(converted_values)
+                # print("*" * 50)
+
         # if any values are left over, their value is kept the same
-        for v in curr_values.copy():
-            bisect.insort(converted_values, v)
-            curr_values.remove(v)
+        for r in non_converted_values:
+            converted_values.append(r)
 
-        # print(converted_values)
-        # print("*" * 50)
-        curr_values, converted_values = converted_values, curr_values
+        for v in converted_values:
+            print(v)
+        print("*" * 50)
+        non_converted_values = converted_values
+        converted_values = []
 
-    return curr_values
+    return converted_values
 
 
 def part1(_input: list[str]) -> int:
