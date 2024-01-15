@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from itertools import batched
-import bisect
 
 MAPPING_NAMES = (
     "seed-to-soil",
@@ -22,6 +21,15 @@ class Range:
 
     def __str__(self) -> str:
         return f"'{', '.join([str(i) for i in range(self.min, self.max + 1)])}'"
+
+    def __lt__(self, other) -> bool:
+        return self.min < other.min
+
+    def __gt__(self, other) -> bool:
+        return self.min > other.min
+
+    def __iter__(self):
+        return iter(range(self.min, self.max + 1))
 
 
 def _parse(data: list[str]) -> tuple[list[int], dict[str, list[list[int]]]]:
@@ -79,16 +87,17 @@ def get_range_overlap(range_1: Range, range_2: Range) -> Range | None:
 
 
 def convert_seeds(seed_range: Range, conversion_mappings: dict[str, list[list[Range]]]) -> list[Range]:
-    non_converted_values: list[Range] = [seed_range]
+    unconverted_values: list[Range] = [seed_range]
     converted_values: list[Range] = []
-    # print(curr_values)
+
     for mapping_name in conversion_mappings:
-        # print(mapping_name)
         for dest_range, source_range in conversion_mappings[mapping_name]:
-            if not non_converted_values:
+            # if nothing to convert, skip
+            if not unconverted_values:
                 break
 
-            for r in non_converted_values.copy():
+            # for any unconverted ranges, check if they overlap with the source range
+            for r in unconverted_values.copy():
                 overlap = get_range_overlap(
                     range_1=r,
                     range_2=source_range,
@@ -96,16 +105,15 @@ def convert_seeds(seed_range: Range, conversion_mappings: dict[str, list[list[Ra
                 if overlap is None:
                     continue
 
-                lower_leftover = Range(source_range.min, overlap.min - 1) if source_range.min < overlap.min else None
-                upper_leftover = Range(overlap.max + 1, source_range.max) if source_range.max > overlap.max else None
+                lower_leftover = Range(r.min, overlap.min - 1) if r.min < overlap.min else None
+                upper_leftover = Range(overlap.max + 1, r.max) if r.max > overlap.max else None
 
                 if lower_leftover:
-                    non_converted_values.append(lower_leftover)
+                    unconverted_values.append(lower_leftover)
 
                 if upper_leftover:
-                    non_converted_values.append(upper_leftover)
+                    unconverted_values.append(upper_leftover)
 
-                # converted_values.append(dest_range.min + (v - source_range.min))
                 converted_values.append(
                     Range(
                         dest_range.min + (overlap.min - source_range.min),
@@ -113,23 +121,15 @@ def convert_seeds(seed_range: Range, conversion_mappings: dict[str, list[list[Ra
                     )
                 )
 
-                non_converted_values.remove(r)
-
-                # print(non_converted_values)
-                # print(converted_values)
-                # print("*" * 50)
+                unconverted_values.remove(r)
 
         # if any values are left over, their value is kept the same
-        for r in non_converted_values:
+        for r in unconverted_values:
             converted_values.append(r)
 
-        for v in converted_values:
-            print(v)
-        print("*" * 50)
-        non_converted_values = converted_values
+        unconverted_values = converted_values
         converted_values = []
-
-    return converted_values
+    return unconverted_values
 
 
 def part1(_input: list[str]) -> int:
@@ -140,15 +140,13 @@ def part1(_input: list[str]) -> int:
 
 
 def part2(_input: list[str]) -> int:
-    # TODO
     seeds, parsed_data = _parse(data=_input)
     parsed_range_data = _parse_ranges(parsed_data)
     seed_locations = []
     for seed_batch in batched(seeds, 2):
         seed_range = Range(min=seed_batch[0], max=seed_batch[0] + seed_batch[1] - 1)
         seed_locations += convert_seeds(seed_range, parsed_range_data)
-
-    return min(seed_locations)
+    return min(seed_locations).min
 
 
 parts = (part1, part2)
